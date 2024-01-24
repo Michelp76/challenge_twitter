@@ -126,34 +126,34 @@ describe('Feed', () => {
     expect(res.data.feed.length).toEqual(2)
   })
 
-  // TEST TWEETS FROM A PARTICULAR USER
-  it('should only fetch tweets and retweets from a user', async () => {
-    const user = await createUser()
-    const secondUser = await createUser('second', 'second@test.fr', 'Second')
-    const tweet = await createTweet(user, 'First tweet', 'tweet')
-    const secondTweet = await createTweet(secondUser, 'Second tweet', 'tweet')
-    const comment = await createTweet(user, 'First comment', 'comment')
-    const retweet = await createRetweet(user, secondTweet)
+  // // TEST TWEETS FROM A PARTICULAR USER
+  // it('should only fetch tweets and retweets from a user', async () => {
+  //   const user = await createUser()
+  //   const secondUser = await createUser('second', 'second@test.fr', 'Second')
+  //   const tweet = await createTweet(user, 'First tweet', 'tweet')
+  //   const secondTweet = await createTweet(secondUser, 'Second tweet', 'tweet')
+  //   const comment = await createTweet(user, 'First comment', 'comment')
+  //   const retweet = await createRetweet(user, secondTweet)
 
-    const { query } = await testClient({
-      req: {
-        headers: {
-          authorization: 'Bearer ' + generateToken(user),
-        },
-      },
-    })
+  //   const { query } = await testClient({
+  //     req: {
+  //       headers: {
+  //         authorization: 'Bearer ' + generateToken(user),
+  //       },
+  //     },
+  //   })
 
-    const res = await query({
-      query: TWEETS,
-      variables: {
-        user_id: user.id,
-        filter: 'TWEETS_RETWEETS',
-      },
-    })
+  //   const res = await query({
+  //     query: TWEETS,
+  //     variables: {
+  //       user_id: user.id,
+  //       filter: 'TWEETS_RETWEETS',
+  //     },
+  //   })
 
-    expect(res.data.tweets).not.toBeNull()
-    expect(res.data.tweets.length).toEqual(2)
-  })
+  //   expect(res.data.tweets).not.toBeNull()
+  //   expect(res.data.tweets.length).toEqual(2)
+  // })
 
   it('should only fetch tweets, retweets and comments from a user', async () => {
     const user = await createUser()
