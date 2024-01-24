@@ -1,3 +1,6 @@
+Tiré des articles : 
+https://dev.to/ipscodingchallenge/part-1-creating-a-twitter-clone-with-graphql-knex-typescript-and-react-32i1
+
 - Créer un fichier '.env.development' à la racine :
 ```
 PORT=5432
