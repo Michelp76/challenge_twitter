@@ -1,4 +1,4 @@
-import { ApolloError } from 'apollo-server'
+import { ApolloError } from "apollo-server";
 import {
   Arg,
   Args,
@@ -12,31 +12,31 @@ import {
   Query,
   Resolver,
   Root,
-} from 'type-graphql'
-import AddTweetPayload from '../dto/AddTweetPayload'
-import LikeRetweetAuthor from '../entities/LikeRetweetAuthor'
-import Media from '../entities/Media'
-import Preview from '../entities/Preview'
-import Tweet, { TweetTypeEnum } from '../entities/Tweet'
-import TweetUserInfos from '../entities/TweetUserInfo'
-import User from '../entities/User'
-import { Filters } from '../repositories/TweetRepository'
-import { MyContext } from '../types/types'
-import { selectCountsForTweet } from '../utils/utils'
+} from "type-graphql";
+import AddTweetPayload from "../dto/AddTweetPayload";
+import LikeRetweetAuthor from "../entities/LikeRetweetAuthor";
+import Media from "../entities/Media";
+import Preview from "../entities/Preview";
+import Tweet, { TweetTypeEnum } from "../entities/Tweet";
+import TweetUserInfos from "../entities/TweetUserInfo";
+import User from "../entities/User";
+import { Filters } from "../repositories/TweetRepository";
+import { MyContext } from "../types/types";
+import { selectCountsForTweet } from "../utils/utils";
 
 @ArgsType()
 class PageInfo {
   @Field(() => Int, { nullable: true })
-  limit: number = 20
+  limit: number = 20;
 
   @Field(() => Int, { nullable: true })
-  offset: number = 0
+  offset: number = 0;
 }
 
 @ArgsType()
 class ArgsFilters {
   @Field(() => Filters, { nullable: true })
-  filter?: Filters = Filters.TWEETS_RETWEETS
+  filter?: Filters = Filters.TWEETS_RETWEETS;
 }
 
 @Resolver((of) => Tweet)
@@ -47,16 +47,16 @@ class TweetResolver {
     const {
       userId,
       repositories: { tweetRepository, followerRepository },
-    } = ctx
+    } = ctx;
 
     const followedUsers = await followerRepository.findAll(
       userId!,
-      'following_id'
-    )
+      "following_id"
+    );
 
-    const tweets = tweetRepository.feed(userId!, followedUsers, limit, offset)
+    const tweets = tweetRepository.feed(userId!, followedUsers, limit, offset);
 
-    return tweets
+    return tweets;
   }
 
   @Query(() => [Tweet])
@@ -64,30 +64,30 @@ class TweetResolver {
   async tweets(
     @Args() { limit, offset }: PageInfo,
     @Args() { filter }: ArgsFilters,
-    @Arg('user_id') user_id: number,
+    @Arg("user_id") user_id: number,
     @Ctx() ctx: MyContext
   ) {
     const {
       repositories: { tweetRepository },
-    } = ctx
+    } = ctx;
 
-    const tweets = await tweetRepository.tweets(user_id, limit, offset, filter)
+    const tweets = await tweetRepository.tweets(user_id, limit, offset, filter);
 
-    return tweets
+    return tweets;
   }
 
   @Query(() => Tweet)
   @Authorized()
-  async tweet(@Arg('tweet_id') tweet_id: number, @Ctx() ctx: MyContext) {
+  async tweet(@Arg("tweet_id") tweet_id: number, @Ctx() ctx: MyContext) {
     const {
       repositories: { tweetRepository },
-    } = ctx
+    } = ctx;
 
-    const tweet = await tweetRepository.tweet(tweet_id)
+    const tweet = await tweetRepository.tweet(tweet_id);
 
-    console.log('tweet', tweet)
+    console.log("tweet", tweet);
 
-    return tweet
+    return tweet;
     //
   }
 
@@ -95,50 +95,50 @@ class TweetResolver {
   @Authorized()
   async comments(
     @Args() { limit, offset }: PageInfo,
-    @Arg('parent_id') parent_id: number,
+    @Arg("parent_id") parent_id: number,
     @Ctx() ctx: MyContext
   ) {
-    const { db } = ctx
+    const { db } = ctx;
 
-    const comments = await db('tweets')
+    const comments = await db("tweets")
       .where({
         parent_id,
         type: TweetTypeEnum.COMMENT,
       })
-      .select(['tweets.*', ...selectCountsForTweet(db)])
-      .orderBy('id', 'desc')
+      .select(["tweets.*", ...selectCountsForTweet(db)])
+      .orderBy("id", "desc")
       .limit(limit)
-      .offset(offset)
+      .offset(offset);
 
-    return comments
+    return comments;
   }
 
   @FieldResolver(() => User)
   async user(@Root() tweet: Tweet, @Ctx() ctx: MyContext) {
     const {
       dataloaders: { userDataloader },
-    } = ctx
+    } = ctx;
 
-    return await userDataloader.load(tweet.user_id)
+    return await userDataloader.load(tweet.user_id);
   }
 
   @FieldResolver(() => Tweet, { nullable: true })
   async parent(@Root() tweet: Tweet, @Ctx() ctx: MyContext) {
     const {
       dataloaders: { parentTweetDataloader },
-    } = ctx
+    } = ctx;
 
-    if (!tweet.parent_id) return null
+    if (!tweet.parent_id) return null;
 
-    return await parentTweetDataloader.load(tweet.parent_id!)
+    return await parentTweetDataloader.load(tweet.parent_id!);
   }
 
   @FieldResolver(() => TweetTypeEnum)
   type(@Root() tweet: Tweet) {
     if (tweet.original_tweet_id) {
-      return TweetTypeEnum.RETWEET
+      return TweetTypeEnum.RETWEET;
     }
-    return tweet.type
+    return tweet.type;
   }
 
   @FieldResolver(() => TweetUserInfos)
@@ -146,141 +146,141 @@ class TweetResolver {
     const {
       userId,
       dataloaders: { tweetUserInfosDataloader },
-    } = ctx
+    } = ctx;
 
     const results = await tweetUserInfosDataloader.load({
       tweet_id: tweet.id,
       user_id: userId,
-    })
+    });
 
     return {
       isLiked: results
-        ? results.id === tweet.id && results.infos.includes('liked')
+        ? results.id === tweet.id && results.infos.includes("liked")
         : false,
       isRetweeted: results
-        ? results.id === tweet.id && results.infos.includes('retweeted')
+        ? results.id === tweet.id && results.infos.includes("retweeted")
         : false,
       isBookmarked: results
-        ? results.id === tweet.id && results.infos.includes('bookmarked')
+        ? results.id === tweet.id && results.infos.includes("bookmarked")
         : false,
-    }
+    };
   }
 
   @FieldResolver(() => Preview)
   async preview(@Root() tweet: Tweet, @Ctx() ctx: MyContext) {
     const {
       dataloaders: { previewLinkDataloader },
-    } = ctx
+    } = ctx;
 
-    return await previewLinkDataloader.load(tweet.id)
+    return await previewLinkDataloader.load(tweet.id);
   }
 
   @FieldResolver(() => Media)
   async media(@Root() tweet: Tweet, @Ctx() ctx: MyContext) {
     const {
       dataloaders: { mediaDataloader },
-    } = ctx
+    } = ctx;
 
-    return await mediaDataloader.load(tweet.id)
+    return await mediaDataloader.load(tweet.id);
   }
 
   @FieldResolver(() => LikeRetweetAuthor, { nullable: true })
   likeAuthor(@Root() tweet: Tweet) {
-    if (!tweet.like_author) return null
+    if (!tweet.like_author) return null;
 
-    const splitted = tweet.like_author.split(',')
+    const splitted = tweet.like_author.split(",");
 
     return {
       display_name: splitted[0],
       username: splitted[1],
-    }
+    };
   }
 
   @FieldResolver(() => LikeRetweetAuthor, { nullable: true })
   retweetAuthor(@Root() tweet: Tweet) {
-    if (!tweet.retweet_author) return null
+    if (!tweet.retweet_author) return null;
 
-    const splitted = tweet.retweet_author.split(',')
-    console.log('splitted', splitted)
+    const splitted = tweet.retweet_author.split(",");
+    console.log("splitted", splitted);
 
     return {
       display_name: splitted[0],
       username: splitted[1],
-    }
+    };
   }
 
   @Mutation(() => Tweet)
   @Authorized()
   async addTweet(
-    @Arg('payload') payload: AddTweetPayload,
+    @Arg("payload") payload: AddTweetPayload,
     @Ctx() ctx: MyContext
   ) {
-    const { db, userId, bus } = ctx
-    const { body, hashtags, url, type, parent_id, media } = payload
+    const { db, userId, bus } = ctx;
+    const { body, hashtags, url, type, parent_id, media } = payload;
 
     if (parent_id) {
-      const [tweetExists] = await db('tweets').where('id', parent_id)
+      const [tweetExists] = await db("tweets").where("id", parent_id);
       if (!tweetExists) {
-        throw new ApolloError('Tweet not found')
+        throw new ApolloError("Tweet not found");
       }
     }
 
     try {
-      let tweet: any
-      let newMedia: any
+      let tweet: any;
+      let newMedia: any;
       await db.transaction(async (trx) => {
-        ;[tweet] = await db('tweets')
+        [tweet] = await db("tweets")
           .insert({
             body,
             type,
             parent_id,
             user_id: userId,
           })
-          .returning('*')
-          .transacting(trx)
+          .returning("*")
+          .transacting(trx);
 
         if (media) {
-          ;[newMedia] = await db('medias')
+          [newMedia] = await db("medias")
             .insert({
               url: media,
               user_id: userId,
               tweet_id: tweet.id,
             })
-            .returning(['id', 'url'])
-            .transacting(trx)
+            .returning(["id", "url"])
+            .transacting(trx);
         }
-      })
+      });
 
       // Send the event to scrap the preview
       // I don't want to scrap the preview is a media is uploaded
       if (url && !media) {
-        bus.emit('scrap', url, tweet.id)
+        bus.emit("scrap", url, tweet.id);
       }
 
       if (hashtags && hashtags?.length > 0) {
         const hashTagToInsert = hashtags.map((h) => {
           return {
             hashtag: h,
-          }
-        })
+          };
+        });
         try {
           // Insert the hashtags
-          const hashTagsIds = await db('hashtags')
+          const hashTagsIds = await db("hashtags")
             .insert(hashTagToInsert)
-            .onConflict('hashtag')
+            .onConflict("hashtag")
             .merge()
-            .returning('id')
+            .returning("id");
 
           // Insert the relation betweet hashtag and the tweet
           const toInsert = hashTagsIds.map((id) => {
             return {
               hashtag_id: id,
               tweet_id: tweet.id,
-            }
-          })
-          await db('hashtags_tweets').insert(toInsert)
+            };
+          });
+          await db("hashtags_tweets").insert(toInsert);
         } catch (e) {
-          console.log('e', e)
+          console.log("e", e);
         }
       }
 
@@ -293,33 +293,67 @@ class TweetResolver {
         retweetsCount: 0,
         bookmarksCount: 0,
         media: newMedia ?? null,
-      }
+      };
     } catch (e) {
-      throw new ApolloError(e.message)
+      throw new ApolloError(e.message);
+    }
+  }
+
+  @Mutation(() => Tweet)
+  @Authorized()
+  async updateTweet(
+    @Arg("id") id: number,
+    @Arg("body") body: string,
+    @Ctx() ctx: MyContext
+  ) {
+    const { db } = ctx;
+
+    try {
+      let tweet: any;
+      let newMedia: any;
+      await db.transaction(async (trx) => {
+        [tweet] = await db("tweets")
+          .where({ id: id })
+          .update({ body: body }, ["id", "body", "created_at"]);
+      });
+
+      // I add the differents counts as there not nullable and
+      // I need them in the frontend.
+      return {
+        ...tweet,
+        likesCount: 0,
+        commentsCount: 0,
+        retweetsCount: 0,
+        bookmarksCount: 0,
+        media: newMedia ?? null,
+      };
+    } catch (e) {
+      throw new ApolloError(e.message);
     }
   }
 
   @Mutation(() => Int)
   @Authorized()
-  async deleteTweet(@Arg('id') id: number, @Ctx() ctx: MyContext) {
-    const { db, userId } = ctx
+  async deleteTweet(@Arg("id") id: number, @Ctx() ctx: MyContext) {
+    const { db, userId } = ctx;
 
     try {
-      const [tweet] = await db('tweets').where({
+      const [tweet] = await db("tweets").where({
         id,
         user_id: userId,
-      })
+      });
 
       if (!tweet) {
-        throw new ApolloError('Tweet not found')
+        throw new ApolloError("Tweet not found");
       }
 
       // Return the number of affected rows
-      return await db('tweets').where({ id, user_id: userId }).del()
+      return await db("tweets").where({ id, user_id: userId }).del();
     } catch (e) {
-      throw new ApolloError(e.message)
+      throw new ApolloError(e.message);
     }
   }
 }
 
-export default TweetResolver
+export default TweetResolver;
+  

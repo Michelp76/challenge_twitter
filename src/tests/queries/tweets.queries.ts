@@ -62,6 +62,17 @@ export const ADD_TWEET = gql`
     }
   }
 `
+
+export const UPD_TWEET = gql`
+  mutation($id: Float!, $body: String!) {
+    updateTweet(id: $id, body: $body) {
+      id
+      body
+      created_at
+    }
+  }
+`
+
 export const DELETE_TWEET = gql`
   mutation($id: Float!) {
     deleteTweet(id: $id)
